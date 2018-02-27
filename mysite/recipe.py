@@ -6,12 +6,18 @@ from flask import Flask
 app = Flask(__name__)
 
 @app.route('/')
-def hello_world():
+def home():
     return '''
 
-    Hello from Flask!
+<html>
+	<title>recipe0 home page</title>
+	<body>
+		<h1>Welcome to recipe0!</h1>
 
-	testing again
+		<p>This is the home page.</p>
+	</body>
+</html>
+
     '''
 
 

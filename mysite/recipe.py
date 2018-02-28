@@ -6,10 +6,25 @@ from flask import Flask
 app = Flask(__name__)
 
 @app.route('/')
+<<<<<<< HEAD
 def hello_world():
     
     return '''
     <a href = '/login'>Log in</a>
+=======
+def home():
+    return '''
+
+<html>
+	<title>recipe0 home page</title>
+	<body>
+		<h1>Welcome to recipe0!</h1>
+
+		<p>This is the home page.</p>
+	</body>
+</html>
+
+>>>>>>> f0a5c3e1e4eb1968d7d23ea439a26598ceeb05ad
     '''
 
 
@@ -18,6 +33,24 @@ def login():
     return '''
 
 <html>
+	<title>recipe0 login page</title>
+	<body>
+		<h1>Login to recipe0!</h1>
+
+		<p>This is the login page.</p>
+
+		<form action="/" method="post">
+			<div class="container">
+				<label for="uname"><b>Username</b></label>
+				<input type="text" placeholder="Enter Username" name="uname" required>
+
+				<label for="psw"><b>Password</b></label>
+				<input type="password" placeholder="Enter Password" name="psw" required>
+
+				<button type="submit">Login</button>
+			</div>
+		</form>
+	</body>
 
 
 

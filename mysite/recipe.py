@@ -7,10 +7,7 @@ app = Flask(__name__)
 
 @app.route('/', methods = ['POST'])
 def home():
-
-	if request.method == 'post':
-		return '''
-
+	return '''
 	<html>
 		<title>recipe0 home page</title>
 		<body>
@@ -22,20 +19,6 @@ def home():
 	</html>
 
 		'''
-	else:
-		return '''
-	<html>
-		<title>recipe0 home page</title>
-		<body>
-			<h1>Welcome to recipe0!</h1>
-
-			<p>You are not logged in</p>
-			<a href = '/login'>Log in</a>
-		</body>
-	</html>
-
-		'''
-
 
 @app.route('/login')
 def login():
@@ -49,15 +32,13 @@ def login():
 		<p>This is the login page.</p>
 
 		<form action="/" method="post">
-			<div class="container">
-				<label for="uname"><b>Username</b></label>
-				<input type="text" placeholder="Enter Username" name="uname" required>
+			<label for="uname"><b>Username</b></label>
+			<input type="text" placeholder="Enter Username" name="uname" required />
 
-				<label for="psw"><b>Password</b></label>
-				<input type="password" placeholder="Enter Password" name="psw" required>
+			<label for="psw"><b>Password</b></label>
+			<input type="password" placeholder="Enter Password" name="psw" required />
 
-				<button type="submit">Login</button>
-			</div>
+			<button type="submit">Login</button>
 		</form>
 	</body>
 

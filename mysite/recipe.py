@@ -6,12 +6,6 @@ from flask import Flask
 app = Flask(__name__)
 
 @app.route('/')
-<<<<<<< HEAD
-def hello_world():
-    
-    return '''
-    <a href = '/login'>Log in</a>
-=======
 def home():
     return '''
 
@@ -21,10 +15,10 @@ def home():
 		<h1>Welcome to recipe0!</h1>
 
 		<p>This is the home page.</p>
+    	<a href = '/login'>Log in</a>
 	</body>
 </html>
 
->>>>>>> f0a5c3e1e4eb1968d7d23ea439a26598ceeb05ad
     '''
 
 

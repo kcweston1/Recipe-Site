@@ -5,21 +5,36 @@ from flask import Flask
 
 app = Flask(__name__)
 
-@app.route('/', methods = ['POST', ''])
+@app.route('/', methods = ['POST'])
 def home():
-    return '''
 
-<html>
-	<title>recipe0 home page</title>
-	<body>
-		<h1>Welcome to recipe0!</h1>
+	if request.method == 'post':
+		return '''
 
-		<p>This is the home page.</p>
-    	<a href = '/login'>Log in</a>
-	</body>
-</html>
+	<html>
+		<title>recipe0 home page</title>
+		<body>
+			<h1>Welcome to recipe0!</h1>
 
-    '''
+			<p>This is the home page.</p>
+			<a href = '/login'>Log in</a>
+		</body>
+	</html>
+
+		'''
+	else:
+		return '''
+	<html>
+		<title>recipe0 home page</title>
+		<body>
+			<h1>Welcome to recipe0!</h1>
+
+			<p>You are not logged in</p>
+			<a href = '/login'>Log in</a>
+		</body>
+	</html>
+
+		'''
 
 
 @app.route('/login')

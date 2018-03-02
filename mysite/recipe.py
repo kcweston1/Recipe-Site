@@ -1,16 +1,26 @@
 
 # A very simple Flask Hello World app for you to get started with...
 
-from flask import Flask
+from flask import Flask, request
 import MySQLdb
 
 app = Flask(__name__)
-conn = MySQLdb.connect(user='', passwd='', db='')
+conn = MySQLdb.connect(host='recipe0.mysql.pythonanywhere-services.com',
+                       user='recipe0',
+                       passwd='database01',
+                       db='recipe0$default')
 cursor = conn.cursor()
 
 
 @app.route('/', methods = ['GET', 'POST'])
 def home():
+        email = request.form.get('email')
+        password = request.form.get('password')
+        #check if email is in db
+        #if yes, check to see that password + user.salt = hashedpassword
+        #  by running password + user.salt through hash
+        #if no, flash message for invalid login.
+        
 	return '''
 	<html>
 		<title>recipe0 home page</title>
@@ -69,3 +79,5 @@ def submit():
         <input type='submit' name='submit'></input>
     </form>
     '''
+
+@app.route(

@@ -2,10 +2,14 @@
 # A very simple Flask Hello World app for you to get started with...
 
 from flask import Flask
+import MySQLdb
 
 app = Flask(__name__)
+conn = MySQLdb.connect(user='', passwd='', db='')
+cursor = conn.cursor()
 
-@app.route('/', methods = ['POST'])
+
+@app.route('/', methods = ['GET', 'POST'])
 def home():
 	return '''
 	<html>
@@ -15,6 +19,7 @@ def home():
 
 			<p>This is the home page.</p>
 			<a href = '/login'>Log in</a>
+                        <a href = '/submitrecipe'>Submit a recipe</a>
 		</body>
 	</html>
 
@@ -48,7 +53,7 @@ def login():
 
     '''
 
-@app.route('/submitRecipe')
+@app.route('/submitrecipe')
 def submit():
     return '''
     <h1>Submit a new recipe</h1>

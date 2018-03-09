@@ -1,8 +1,8 @@
 
 # A very simple Flask Hello World app for you to get started with...
 
-from flask import Flask, request
-import MySQLdb, hashlib, functions
+from flask import Flask, request, render_template
+import MySQLdb, string, hashlib, secrets, functions, mail
 
 app = Flask(__name__)
 
@@ -92,7 +92,9 @@ def signup_status():
             </html>
             '''
     #hash the current password here
-    hex_dig = hashlib.sha256(password.encode('utf-8')).hexdigest()
+    salt = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(32))
+    salted_pass = password + salt
+    hex_dig = hashlib.sha256(salted_pass.encode('utf-8')).hexdigest()
 
     #compute the current max userid
     cursor.execute("select MAX(id) from users")
@@ -100,7 +102,7 @@ def signup_status():
     new_id = max_id[0]['MAX(id)'] + 1
 
     #insert new user into users table
-    sql = "insert users (id, email, username, passwordhash) values (%d, '%s', '%s', '%s')" % (new_id, email, username, hex_dig)
+    sql = "insert users (id, email, username, passwordhash, salt) values (%d, '%s', '%s', '%s', '%s')" % (new_id, email, username, hex_dig, salt)
     cursor.execute(sql)
     conn.commit()
     conn.close()
@@ -157,4 +159,13 @@ def submit():
     </form>
     '''
 
+@app.route('/testmail', methods=['GET'])
+def testmail():
+    if request.method == 'GET':
+        mail.mail(to='kcweston1@cougars.ccis.edu', subject='test')
+    return '''
+    <form action='/testmail' method='get'>
+        <input type='submit' name='submit'>test mail</input>
+    </form>
+    '''
 

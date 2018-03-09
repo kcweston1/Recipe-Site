@@ -9,7 +9,6 @@ app = Flask(__name__)
 
 @app.route('/', methods = ['GET', 'POST'])
 def home():
-	
     login_status = ''
     if request.method == 'POST':
         session['username'] = request.form.get('uname')
@@ -33,12 +32,12 @@ def home():
                     else:
                         login_status = "login failed!"
 
-	usernametext = ''
-	if 'username' in session:
-		sessionusername = session['username']
-		usernametext = 'Logged in as ' + sessionusername + '.'
-	else:
-		usernametext = 'Not logged in'
+    usernametext = ''
+    if 'username' in session:
+        sessionusername = session['username']
+        usernametext = 'Logged in as ' + sessionusername + '.'
+    else:
+        usernametext = 'Not logged in'
 
     #check if email is in db
     #if yes, check to see that password + user.salt = hashedpassword

@@ -1,7 +1,7 @@
 
 # A very simple Flask Hello World app for you to get started with...
 
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, session
 import MySQLdb, string, hashlib, secrets, functions, mail
 
 app = Flask(__name__)

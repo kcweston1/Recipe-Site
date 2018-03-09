@@ -48,8 +48,7 @@ def home():
     <html>
 		<title>recipe0 home page</title>
 		<body>
-		    <p>%s</p>
-			<p>%s</p>
+		    %s %s
 			<h1>Welcome to recipe0!</h1>
 
 			<p>This is the home page.</p>
@@ -58,7 +57,7 @@ def home():
             <a href='/signup'>Sign up</a></br>
 		</body>
 	</html>
-    ''' % (login_status), (usernametext)
+    ''' % (login_status, usernametext)
 
 
 @app.route('/signup')

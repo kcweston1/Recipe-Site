@@ -12,7 +12,7 @@ def home():
 	
     login_status = ''
     if request.method == 'POST':
-		session['username'] = request.form.get('uname')
+        session['username'] = request.form.get('uname')
 
         conn = MySQLdb.connect(host='recipe0.mysql.pythonanywhere-services.com',
                        user='recipe0',

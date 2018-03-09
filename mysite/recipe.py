@@ -9,8 +9,11 @@ app = Flask(__name__)
 
 @app.route('/', methods = ['GET', 'POST'])
 def home():
+	
     login_status = ''
     if request.method == 'POST':
+		session['username'] = request.form.get('uname')
+
         conn = MySQLdb.connect(host='recipe0.mysql.pythonanywhere-services.com',
                        user='recipe0',
                        passwd='database01',
@@ -30,6 +33,13 @@ def home():
                     else:
                         login_status = "login failed!"
 
+	usernametext = ''
+	if 'username' in session:
+		sessionusername = session['username']
+		usernametext = 'Logged in as ' + sessionusername + '.'
+	else:
+		usernametext = 'Not logged in'
+
     #check if email is in db
     #if yes, check to see that password + user.salt = hashedpassword
     #  by running password + user.salt through hash
@@ -39,7 +49,8 @@ def home():
     <html>
 		<title>recipe0 home page</title>
 		<body>
-		    %s
+		    <p>%s</p>
+			<p>%s</p>
 			<h1>Welcome to recipe0!</h1>
 
 			<p>This is the home page.</p>
@@ -48,7 +59,7 @@ def home():
             <a href='/signup'>Sign up</a></br>
 		</body>
 	</html>
-    ''' % (login_status)
+    ''' % (login_status), (usernametext)
 
 
 @app.route('/signup')

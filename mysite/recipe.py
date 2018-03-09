@@ -2,38 +2,115 @@
 # A very simple Flask Hello World app for you to get started with...
 
 from flask import Flask, request
-import MySQLdb
+import MySQLdb, hashlib, functions
 
 app = Flask(__name__)
-conn = MySQLdb.connect(host='recipe0.mysql.pythonanywhere-services.com',
-                       user='recipe0',
-                       passwd='database01',
-                       db='recipe0$default')
-cursor = conn.cursor()
 
 
 @app.route('/', methods = ['GET', 'POST'])
 def home():
-        email = request.form.get('email')
-        password = request.form.get('password')
-        #check if email is in db
-        #if yes, check to see that password + user.salt = hashedpassword
-        #  by running password + user.salt through hash
-        #if no, flash message for invalid login.
-        
-	return '''
-	<html>
+    login_status = ''
+    if request.method == 'POST':
+        conn = MySQLdb.connect(host='recipe0.mysql.pythonanywhere-services.com',
+                       user='recipe0',
+                       passwd='database01',
+                       db='recipe0$default')
+        cursor = conn.cursor()
+
+        username = request.form.get('uname')
+        password = request.form.get('psw')
+        cursor.execute("select * from users")
+        conn.close()
+        users = cursor.fetchall()
+        for user in users:
+            for data in user:
+                if data == username: #email is in db
+                    if functions.check_password(user, password):
+                        login_status = "login successful!"
+                    else:
+                        login_status = "login failed!"
+
+    #check if email is in db
+    #if yes, check to see that password + user.salt = hashedpassword
+    #  by running password + user.salt through hash
+    #if no, flash message for invalid login.
+
+    return '''
+    <html>
 		<title>recipe0 home page</title>
 		<body>
+		    %s
 			<h1>Welcome to recipe0!</h1>
 
 			<p>This is the home page.</p>
-			<a href = '/login'>Log in</a>
-                        <a href = '/submitrecipe'>Submit a recipe</a>
+			<a href = '/login'>Log in</a></br>
+            <a href = '/submitrecipe'>Submit a recipe</a></br>
+            <a href='/signup'>Sign up</a></br>
 		</body>
 	</html>
+    ''' % (login_status)
 
-		'''
+
+@app.route('/signup')
+def signup():
+    return '''
+<html>
+    <title>recipe0 account creator</title>
+    <body>
+        <h1>Create an account on recipe0</h1>
+        <form action = '/signupstatus' method='post'>
+            Email <input type='text' name='email' required/>
+            Username <input type='text' name='uname' required />
+            Password <input type='password' name='psw' required />
+            <button type='submit' name='signup'>Create account</button>
+        </form>
+    </body>
+</html>
+    '''
+
+@app.route('/signupstatus', methods=['POST'])
+def signup_status():
+    conn = MySQLdb.connect(host='recipe0.mysql.pythonanywhere-services.com',
+                       user='recipe0',
+                       passwd='database01',
+                       db='recipe0$default')
+    cursor = conn.cursor(MySQLdb.cursors.DictCursor)  #use dictionary cursor
+
+    email = request.form.get('email').lower()
+    username = request.form.get('uname')
+    password = request.form.get('psw')
+    cursor.execute('select * from users')
+    users = cursor.fetchall() #users is currently empty
+
+    print(users)
+    for user in users:
+        if (user['email'] == email or user['username'].lower() == username.lower()):
+            return '''
+            <html>
+                Email/username already in use!
+                <a href='/signup'>Return to signup</a>
+            </html>
+            '''
+    #hash the current password here
+    hex_dig = hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+    #compute the current max userid
+    cursor.execute("select MAX(id) from users")
+    max_id = cursor.fetchall()
+    new_id = max_id[0]['MAX(id)'] + 1
+
+    #insert new user into users table
+    sql = "insert users (id, email, username, passwordhash) values (%d, '%s', '%s', '%s')" % (new_id, email, username, hex_dig)
+    cursor.execute(sql)
+    conn.commit()
+    conn.close()
+    return '''
+    <html>
+        Account creation successful!
+        <a href='/login'>Click here to log in</a>
+    </html>
+    '''
+
 
 @app.route('/login')
 def login():
@@ -53,7 +130,7 @@ def login():
 			<label for="psw"><b>Password</b></label>
 			<input type="password" placeholder="Enter Password" name="psw" required />
 
-			<button type="submit">Login</button>
+			<button type="submit" name='login'>Login</button>
 		</form>
 	</body>
 
@@ -80,4 +157,4 @@ def submit():
     </form>
     '''
 
-@app.route(
+

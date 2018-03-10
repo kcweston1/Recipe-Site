@@ -33,6 +33,7 @@ def home():
 
 			<p>This is the home page.</p>
 			<a href = '/login'>Log in</a></br>
+			<a href = '/logout'>Log out</a></br>
             <a href = '/submitrecipe'>Submit a recipe</a></br>
             <a href='/signup'>Sign up</a></br>
 		</body>
@@ -192,6 +193,21 @@ def loggedin():
 		</body>
 	</html>
     ''' % (login_status, usernametext)
+
+@app.route('/logout')
+def logout():
+#remove the username from the session, if it is there.
+    session.pop('username', None)
+    return '''
+    <html>
+        <title>Logout</title>
+        <body>
+            <h2>Logged out.</h2>
+            <a href = '/'>Go to home page</a></br>
+            <a href = '/login'>Log in</a></br>
+        </body>
+    </html>
+    '''
 
 @app.route('/submitrecipe')
 def submit():

@@ -13,11 +13,14 @@ app.secret_key = 'randomstring'
 @app.route('/', methods = ['GET', 'POST'])
 def home():
     usernametext = ''
+    loginout = ''
     if 'username' in session:
         sessionusername = session['username']
         usernametext = 'Logged in as ' + sessionusername + '.'
+        loginout = "<a href = '/logout'>Log out</a></br>"
     else:
         usernametext = 'Not logged in'
+        loginout = "<a href = '/login'>Log in</a></br>"
 
     #check if email is in db
     #if yes, check to see that password + user.salt = hashedpassword
@@ -32,13 +35,12 @@ def home():
 			<h1>Welcome to recipe0!</h1>
 
 			<p>This is the home page.</p>
-			<a href = '/login'>Log in</a></br>
-			<a href = '/logout'>Log out</a></br>
+            %s
             <a href = '/submitrecipe'>Submit a recipe</a></br>
             <a href='/signup'>Sign up</a></br>
 		</body>
 	</html>
-    ''' % (usernametext)
+    ''' % (usernametext, loginout)
 
 
 @app.route('/signup')

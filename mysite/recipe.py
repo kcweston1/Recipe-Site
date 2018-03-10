@@ -7,7 +7,6 @@ import MySQLdb, string, hashlib, secrets, functions, mail
 app = Flask(__name__)
 
 # generate random string for the session's secret key
-app.secretkey = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(32))
 
 
 @app.route('/', methods = ['GET', 'POST'])
@@ -145,6 +144,7 @@ def login():
 def loggedin():
     login_status = ''
     if request.method == 'POST':
+        app.secretkey = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(32))
         session['username'] = request.form.get('uname')
 
         conn = MySQLdb.connect(host='recipe0.mysql.pythonanywhere-services.com',

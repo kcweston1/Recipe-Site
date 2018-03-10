@@ -48,7 +48,8 @@ def home():
     <html>
 		<title>recipe0 home page</title>
 		<body>
-		    %s %s
+		    <p>%s</p>
+            <p>%s</p>
 			<h1>Welcome to recipe0!</h1>
 
 			<p>This is the home page.</p>

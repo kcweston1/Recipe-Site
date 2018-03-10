@@ -83,38 +83,48 @@ def signup_status():
                        user='recipe0',
                        passwd='database01',
                        db='recipe0$default')
-    cursor = conn.cursor(MySQLdb.cursors.DictCursor)  #use dictionary cursor
+    cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
     email = request.form.get('email').lower()
     username = request.form.get('uname')
     password = request.form.get('psw')
     cursor.execute('select * from users')
-    users = cursor.fetchall() #users is currently empty
+    users = cursor.fetchall()
 
-    print(users)
-    for user in users:
-        if (user['email'] == email or user['username'].lower() == username.lower()):
-            return '''
-            <html>
-                Email/username already in use!
-                <a href='/signup'>Return to signup</a>
-            </html>
-            '''
+    print(len(users))
+    if (len(users) > 0):
+        for user in users:
+            if (user['email'] == email or user['username'].lower() == username.lower()):
+                return '''
+                <html>
+                    Email/username already in use!
+                    <a href='/signup'>Return to signup</a>
+                </html>
+                '''
     #hash the current password here
     salt = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(32))
     salted_pass = password + salt
     hex_dig = hashlib.sha256(salted_pass.encode('utf-8')).hexdigest()
 
     #compute the current max userid
-    cursor.execute("select MAX(id) from users")
-    max_id = cursor.fetchall()
-    new_id = max_id[0]['MAX(id)'] + 1
+    if (len(users) == 0):
+        new_id = 0
+    else:
+        cursor.execute("select MAX(id) from users")
+        max_id = cursor.fetchall()
+        new_id = max_id[0]['MAX(id)'] + 1
 
     #insert new user into users table
-    sql = "insert users (id, email, username, passwordhash, salt) values (%d, '%s', '%s', '%s', '%s')" % (new_id, email, username, hex_dig, salt)
+    confirmation_code = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(32))
+    #sql = "insert unconfirmed_users (email, username, passwordhash, salt, confirmationcode) values ('%s', '%s', '%s', '%s', '%s')" % (email, username, hex_dig, salt, confirmation_code)
+    sql = "insert users (email, username, passwordhash, salt, id) values ('%s', '%s', '%s', '%s', %d)" % (email, username, hex_dig, salt, new_id)
     cursor.execute(sql)
     conn.commit()
     conn.close()
+
+    link = 'http://recipe01.pythonanywhere.com/confirm'
+    text = "Thank you for creating an account on Recipe Site.\nYour confirmation code is %s\nClick the following link to confirm your account:\n%s" % (confirmation_code, link)
+    mail.mail(to=email, subject="[Recipe Site] Confirm Account Creation", text=text)
     return '''
     <html>
         Account creation successful!
@@ -168,13 +178,6 @@ def submit():
     </form>
     '''
 
-@app.route('/testmail', methods=['GET'])
-def testmail():
-    if request.method == 'GET':
-        mail.mail(to='kcweston1@cougars.ccis.edu', subject='test')
-    return '''
-    <form action='/testmail' method='get'>
-        <input type='submit' name='submit'>test mail</input>
-    </form>
-    '''
+@app.route('/confirm)
+def confirm:
 

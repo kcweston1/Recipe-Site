@@ -7,7 +7,7 @@ import MySQLdb, string, hashlib, secrets, functions, mail
 app = Flask(__name__)
 
 # generate random string for the session's secret key
-app.secretkey = 'randomstring'
+app.secret_key = 'randomstring'
 
 
 @app.route('/', methods = ['GET', 'POST'])

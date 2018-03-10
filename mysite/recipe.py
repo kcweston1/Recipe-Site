@@ -71,7 +71,7 @@ def signup_status():
     print(len(users))
     if (len(users) > 0):
         for user in users:
-            if (user['email'] == email or user['username'].lower() == username.lower()):
+            if (user['email'].lower() == email.lower() or user['username'] == username):
                 return '''
                 <html>
                     Email/username already in use!
@@ -84,22 +84,22 @@ def signup_status():
     hex_dig = hashlib.sha256(salted_pass.encode('utf-8')).hexdigest()
 
     #compute the current max userid
-    if (len(users) == 0):
-        new_id = 0
-    else:
-        cursor.execute("select MAX(id) from users")
-        max_id = cursor.fetchall()
-        new_id = max_id[0]['MAX(id)'] + 1
+    #if (len(users) == 0):
+    #    new_id = 0
+    #else:
+    #    cursor.execute("select MAX(id) from users")
+    #    max_id = cursor.fetchall()
+    #    new_id = max_id[0]['MAX(id)'] + 1
 
     #insert new user into users table
     confirmation_code = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(32))
-    #sql = "insert unconfirmed_users (email, username, passwordhash, salt, confirmationcode) values ('%s', '%s', '%s', '%s', '%s')" % (email, username, hex_dig, salt, confirmation_code)
-    sql = "insert users (email, username, passwordhash, salt, id) values ('%s', '%s', '%s', '%s', %d)" % (email, username, hex_dig, salt, new_id)
+    sql = "insert unconfirmed_users (email, username, passwordhash, salt, confirmationcode) values ('%s', '%s', '%s', '%s', '%s')" % (email, username, hex_dig, salt, confirmation_code)
+    #sql = "insert users (email, username, passwordhash, salt, id) values ('%s', '%s', '%s', '%s', %d)" % (email, username, hex_dig, salt, new_id)
     cursor.execute(sql)
     conn.commit()
     conn.close()
 
-    link = 'http://recipe01.pythonanywhere.com/confirm'
+    link = 'http://recipe0.pythonanywhere.com/confirm'
     text = "Thank you for creating an account on Recipe Site.\nYour confirmation code is %s\nClick the following link to confirm your account:\n%s" % (confirmation_code, link)
     mail.mail(to=email, subject="[Recipe Site] Confirm Account Creation", text=text)
     return '''
@@ -207,8 +207,8 @@ def submit():
     </form>
     '''
 
-@app.route('/confirm', methods=["POST"])
-def confirm:
+@app.route('/confirm', methods=["GET", "POST"])
+def confirm():
     if request.method == "POST":
         conn = MySQLdb.connect(host='recipe0.mysql.pythonanywhere-services.com',
                                user='recipe0',
@@ -221,9 +221,10 @@ def confirm:
         cursor.execute('select * from unconfirmed_users')
         users = cursor.fetchall()
 
+        print("Printing unconfirmed users: ", users)
         for user in users:
             if user["email"] == email:
-                if user["confirmation"] = confirmation:
+                if user["confirmationcode"] == confirmation:
                     cursor.execute("select * from users")
                     if (len(cursor.fetchall()) == 0):
                         new_id = 0
@@ -231,27 +232,22 @@ def confirm:
                         cursor.execute("select MAX(id) from users")
                         max_id = cursor.fetchall()
                         new_id = max_id[0]['MAX(id)'] + 1
-        
+
                     sql = "insert users (email, username, passwordhash, salt, id) values ('%s', '%s', '%s', '%s', %d)" % (user["email"], user["username"], user["passwordhash"], user["salt"], new_id)
                     cursor.execute(sql)
-                    sql = "delete from unconfirmed_users where email = \"%s" % (user["email"])
+                    sql = "delete from unconfirmed_users where email = \"%s\"" % (user["email"])
                     cursor.execute(sql)
                     conn.commit()
                     conn.close()
                     return '''
                     success
                     '''
-                else:
-                    return '''
-                    invalid confirmation code
-                    '''
-            else:
-                return '''
-                invalid email
-                '''
-    
+        return '''
+        failed for some reason
+        '''
+
     else:
-    return '''
+        return '''
 <html>
     <h1>Confirm your account</h1>
     <form action='confirm' method='post'>
@@ -260,3 +256,4 @@ def confirm:
         <button type='submit' name='submit'></button>
     </form>
 </html>
+'''

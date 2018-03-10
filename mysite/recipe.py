@@ -207,6 +207,6 @@ def submit():
     </form>
     '''
 
-@app.route('/confirm)
+@app.route('/confirm')
 def confirm:
 

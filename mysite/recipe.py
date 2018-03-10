@@ -139,7 +139,7 @@ def login():
     '''
 
 @app.route('/loggedin', methods = ['GET', 'POST'])
-def home():
+def loggedin():
     login_status = ''
     if request.method == 'POST':
         session['username'] = request.form.get('uname')

@@ -9,29 +9,6 @@ app = Flask(__name__)
 
 @app.route('/', methods = ['GET', 'POST'])
 def home():
-    login_status = ''
-    if request.method == 'POST':
-        session['username'] = request.form.get('uname')
-
-        conn = MySQLdb.connect(host='recipe0.mysql.pythonanywhere-services.com',
-                       user='recipe0',
-                       passwd='database01',
-                       db='recipe0$default')
-        cursor = conn.cursor()
-
-        username = request.form.get('uname')
-        password = request.form.get('psw')
-        cursor.execute("select * from users")
-        conn.close()
-        users = cursor.fetchall()
-        for user in users:
-            for data in user:
-                if data == username: #email is in db
-                    if functions.check_password(user, password):
-                        login_status = "login successful!"
-                    else:
-                        login_status = "login failed!"
-
     usernametext = ''
     if 'username' in session:
         sessionusername = session['username']
@@ -48,7 +25,6 @@ def home():
     <html>
 		<title>recipe0 home page</title>
 		<body>
-		    <p>%s</p>
             <p>%s</p>
 			<h1>Welcome to recipe0!</h1>
 
@@ -58,7 +34,7 @@ def home():
             <a href='/signup'>Sign up</a></br>
 		</body>
 	</html>
-    ''' % (login_status, usernametext)
+    ''' % (usernametext)
 
 
 @app.route('/signup')
@@ -145,7 +121,7 @@ def login():
 
 		<p>This is the login page.</p>
 
-		<form action="/" method="post">
+		<form action="/loggedin" method="post">
 			<label for="uname"><b>Username</b></label>
 			<input type="text" placeholder="Enter Username" name="uname" required />
 
@@ -161,6 +137,58 @@ def login():
 </html>
 
     '''
+
+@app.route('/loggedin', methods = ['GET', 'POST'])
+def home():
+    login_status = ''
+    if request.method == 'POST':
+        session['username'] = request.form.get('uname')
+
+        conn = MySQLdb.connect(host='recipe0.mysql.pythonanywhere-services.com',
+                       user='recipe0',
+                       passwd='database01',
+                       db='recipe0$default')
+        cursor = conn.cursor()
+
+        username = request.form.get('uname')
+        password = request.form.get('psw')
+        cursor.execute("select * from users")
+        conn.close()
+        users = cursor.fetchall()
+        for user in users:
+            for data in user:
+                if data == username: #email is in db
+                    if functions.check_password(user, password):
+                        login_status = "login successful!"
+                    else:
+                        login_status = "login failed!"
+
+    usernametext = ''
+    if 'username' in session:
+        sessionusername = session['username']
+        usernametext = 'Logged in as ' + sessionusername + '.'
+    else:
+        usernametext = 'Not logged in'
+
+    #check if email is in db
+    #if yes, check to see that password + user.salt = hashedpassword
+    #  by running password + user.salt through hash
+    #if no, flash message for invalid login.
+
+    return '''
+    <html>
+		<title>recipe0 home page</title>
+		<body>
+
+		    <p>%s</p>
+            <p>%s</p>
+			<h1>You landed on the post-login page!</h1>
+
+			<a href = '/'>Go to home page</a></br>
+            <a href = '/submitrecipe'>Submit a recipe</a></br>
+		</body>
+	</html>
+    ''' % (login_status, usernametext)
 
 @app.route('/submitrecipe')
 def submit():

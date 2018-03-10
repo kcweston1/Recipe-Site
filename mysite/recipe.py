@@ -179,6 +179,56 @@ def submit():
     </form>
     '''
 
-@app.route('/confirm)
+@app.route('/confirm', methods=["POST"])
 def confirm:
+    if request.method == "POST":
+        conn = MySQLdb.connect(host='recipe0.mysql.pythonanywhere-services.com',
+                               user='recipe0',
+                               passwd='database01',
+                               db='recipe0$default')
+        cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
+        email = request.form.get('email').lower()
+        confirmation = request.form.get('confirmation')
+        cursor.execute('select * from unconfirmed_users')
+        users = cursor.fetchall()
+
+        for user in users:
+            if user["email"] == email:
+                if user["confirmation"] = confirmation:
+                    cursor.execute("select * from users")
+                    if (len(cursor.fetchall()) == 0):
+                        new_id = 0
+                    else:
+                        cursor.execute("select MAX(id) from users")
+                        max_id = cursor.fetchall()
+                        new_id = max_id[0]['MAX(id)'] + 1
+        
+                    sql = "insert users (email, username, passwordhash, salt, id) values ('%s', '%s', '%s', '%s', %d)" % (user["email"], user["username"], user["passwordhash"], user["salt"], new_id)
+                    cursor.execute(sql)
+                    sql = "delete from unconfirmed_users where email = \"%s" % (user["email"])
+                    cursor.execute(sql)
+                    conn.commit()
+                    conn.close()
+                    return '''
+                    success
+                    '''
+                else:
+                    return '''
+                    invalid confirmation code
+                    '''
+            else:
+                return '''
+                invalid email
+                '''
+    
+    else:
+    return '''
+<html>
+    <h1>Confirm your account</h1>
+    <form action='confirm' method='post'>
+        email <input type='text' name='email' required />
+        Confirmation Code <input type='text' name='confirmation' required />
+        <button type='submit' name='submit'></button>
+    </form>
+</html>

@@ -62,10 +62,7 @@ def signup():
 
 @app.route('/signupstatus', methods=['POST'])
 def signup_status():
-    conn = MySQLdb.connect(host='recipe0.mysql.pythonanywhere-services.com',
-                       user='recipe0',
-                       passwd='database01',
-                       db='recipe0$default')
+    conn = functions.db_connect()
     cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
     email = request.form.get('email').lower()
@@ -74,7 +71,6 @@ def signup_status():
     cursor.execute('select * from users')
     users = cursor.fetchall()
 
-    print(len(users))
     if (len(users) > 0):
         for user in users:
             if (user['email'].lower() == email.lower() or user['username'] == username):
@@ -89,14 +85,6 @@ def signup_status():
     salted_pass = password + salt
     hex_dig = hashlib.sha256(salted_pass.encode('utf-8')).hexdigest()
 
-    #compute the current max userid
-    #if (len(users) == 0):
-    #    new_id = 0
-    #else:
-    #    cursor.execute("select MAX(id) from users")
-    #    max_id = cursor.fetchall()
-    #    new_id = max_id[0]['MAX(id)'] + 1
-
     #insert new user into users table
     confirmation_code = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(32))
     sql = "insert unconfirmed_users (email, username, passwordhash, salt, confirmationcode) values ('%s', '%s', '%s', '%s', '%s')" % (email, username, hex_dig, salt, confirmation_code)
@@ -105,9 +93,8 @@ def signup_status():
     conn.commit()
     conn.close()
 
-    link = 'http://recipe0.pythonanywhere.com/confirm'
-    text = "Thank you for creating an account on Recipe Site.\nYour confirmation code is %s\nClick the following link to confirm your account:\n%s" % (confirmation_code, link)
-    mail.mail(to=email, subject="[Recipe Site] Confirm Account Creation", text=text)
+    functions.send_confirmation_email(email, confirmation_code)
+
     return '''
     <html>
         Account creation successful!
@@ -150,11 +137,8 @@ def loggedin():
     if request.method == 'POST':
         session['username'] = request.form.get('uname')
 
-        conn = MySQLdb.connect(host='recipe0.mysql.pythonanywhere-services.com',
-                       user='recipe0',
-                       passwd='database01',
-                       db='recipe0$default')
-        cursor = conn.cursor()
+        conn = functions.db_connect()
+        cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
         username = request.form.get('uname')
         password = request.form.get('psw')
@@ -162,12 +146,11 @@ def loggedin():
         conn.close()
         users = cursor.fetchall()
         for user in users:
-            for data in user:
-                if data == username: #email is in db
-                    if functions.check_password(user, password):
-                        login_status = "login successful!"
-                    else:
-                        login_status = "login failed!"
+            if user['username'] == username:
+                if functions.check_password(user, password):
+                    login_status = "login successful!"
+                else:
+                    login_status = "login failed!"
 
     usernametext = ''
     if 'username' in session:
@@ -175,11 +158,6 @@ def loggedin():
         usernametext = 'Logged in as ' + sessionusername + '.'
     else:
         usernametext = 'Not logged in'
-
-    #check if email is in db
-    #if yes, check to see that password + user.salt = hashedpassword
-    #  by running password + user.salt through hash
-    #if no, flash message for invalid login.
 
     return '''
     <html>
@@ -231,10 +209,7 @@ def submit():
 @app.route('/confirm', methods=["GET", "POST"])
 def confirm():
     if request.method == "POST":
-        conn = MySQLdb.connect(host='recipe0.mysql.pythonanywhere-services.com',
-                               user='recipe0',
-                               passwd='database01',
-                               db='recipe0$default')
+        conn = functions.db_connect()
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
         email = request.form.get('email').lower()
@@ -242,17 +217,10 @@ def confirm():
         cursor.execute('select * from unconfirmed_users')
         users = cursor.fetchall()
 
-        print("Printing unconfirmed users: ", users)
         for user in users:
             if user["email"] == email:
                 if user["confirmationcode"] == confirmation:
-                    cursor.execute("select * from users")
-                    if (len(cursor.fetchall()) == 0):
-                        new_id = 0
-                    else:
-                        cursor.execute("select MAX(id) from users")
-                        max_id = cursor.fetchall()
-                        new_id = max_id[0]['MAX(id)'] + 1
+                    new_id = functions.get_new_id("users", conn, cursor)
 
                     sql = "insert users (email, username, passwordhash, salt, id) values ('%s', '%s', '%s', '%s', %d)" % (user["email"], user["username"], user["passwordhash"], user["salt"], new_id)
                     cursor.execute(sql)
@@ -278,3 +246,20 @@ def confirm():
     </form>
 </html>
 '''
+
+
+#@app.route('/testconfirm', methods=['GET'])
+#    conn = functions.db_connect()
+#    cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+
+#    cursor.execute('select * from unconfirmed_users')
+#        users = cursor.fetchall()
+
+
+
+
+
+
+
+
+

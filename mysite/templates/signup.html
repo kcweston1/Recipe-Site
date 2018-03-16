@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block body %}
+    <p>Hello recipe</p>
+    <html>
+    <title>recipe0 account creator</title>
+    <body>
+        <h1>Create an account on recipe0</h1>
+        <form action = '/signupstatus' method='post'>
+            Email <input type='text' name='email' required/>
+            Username <input type='text' name='uname' required />
+            Password <input type='password' name='psw' required />
+            Confirm password <input type='password' name='confirmpsw' required />
+            <button type='submit' name='signup'>Create account</button>
+        </form>
+    </body>
+</html>
+    {% endblock %}

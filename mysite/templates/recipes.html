@@ -1,0 +1,89 @@
+{% extends "layout.html" %}
+{% block body %}
+    <h1>Recipe name: {{ recipe['name'] }}</h1>
+    {% if current_user_is_creator %}
+        <!--
+        <button type='submit' formaction='{{ url_for('edit_recipe') }}' value={{ recipe['id'] }}>Edit this recipe</button>
+        -->
+
+        <form action="{{ url_for('delete_recipe') + "?id=%s" % (recipe['id']) }}" method="get">
+        <button type='submit' name=id value={{ recipe['id'] }}>Delete this recipe!</button>
+        </form>
+    {% endif %}
+
+    {% if session.logged_in %}
+        {% if likeexists %}
+        <form action="{{ url_for('delete_like') + "?id=%s" % (recipe['id']) }}" method="get">
+        <button type='submit' name=id value={{ recipe['id'] }}>Unlike this recipe</button>
+        </form>
+        {% else %}
+        <form action="{{ url_for('process_like') + "?id=%s" % (recipe['id']) }}" method="get">
+        <button type='submit' name=id value={{ recipe['id'] }}>Like this recipe!</button>
+        </form>
+
+        {% endif %}
+        {% if dislikeexists %}
+        <form action="{{ url_for('delete_like') + "?id=%s" % (recipe['id']) }}" method="get">
+        <button type='submit' name=id value={{ recipe['id'] }}>Undislike this recipe</button>
+        </form>
+        {% else %}
+        <form action="{{ url_for('process_dislike') + "?id=%s" % (recipe['id']) }}" method="get">
+        <button type='submit' name=id value={{ recipe['id'] }}>Dislike this recipe!</button>
+        </form>
+
+        {% endif %}
+    {% endif %}
+
+    <p>Created by <a href= {{ url_for('user') + "?uname=" + creator }}>{{ creator }}</a></p> <!-- include a hyperlink to creator's profile -->
+    <p>Score: {{ score }}</p>
+    <img src="{{ recipe['picture'] }}" alt="tasty food" style="max-width:400px; max-height:400px;"> <br>
+    {% if current_user_is_creator %}
+        Enter a url to the image you would like to use for your recipe:
+        <form action="{{ url_for('edit_picture') }}" method='POST'>
+            <input type='hidden' id='recipeID' name='recipeID' value={{ recipe['id'] }} required></input>
+            <input type='text' name='pictureURL'></input>
+            <button type='submit'>Change picture</button>
+        </form>
+    {% endif %}
+    <p>Description: {{ recipe['description'] }}</p>
+    <p>Prep time: {{ recipe['preptime'] }} Minutes</p>
+    <p>Cook time: {{ recipe['cooktime'] }} Minutes</p>
+    <p>Category: {{ category }}</p>
+    <p>Ingredients: </p>
+    <ul>
+        {% for item in ingredients %}
+        <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+    <p>Instructions: </p>
+    <ol>
+        {% for instruction in instructions %}
+        <li>{{ instruction['instruction'] }}</li>
+        {% endfor %}
+    </ol>
+    <br>
+
+    <div id='comments'>
+    <hr>
+
+        <p>Comments</p>
+        {% if comments %}
+            {% for comment in comments %}
+                <div class='comment'>
+                    <a href= {{ url_for('user') + "?uname=" + comment['username'] }}>{{ comment['username'] }}</a>:
+                    <blockquote>{{ comment['comment'] }}</blockquote>
+                </div>
+            {% endfor %}
+        {% else %}
+            No comments yet!
+        {% endif %}
+
+
+        {% if user_logged_in %}
+        Leave a new comment<br>
+        <form action="{{ url_for('process_comment') + "?id=%s" % (recipe['id']) }}" method="POST">
+            <textarea rows="4" cols="50" wrap='hard' id='commentfield' name='commentfield'></textarea>
+            <button type='submit' name=id value={{ recipe['id'] }}>Comment</button>
+        {% endif %}
+    </div>
+{% endblock %}

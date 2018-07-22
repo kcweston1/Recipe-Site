@@ -1,0 +1,96 @@
+body {
+    background-color: #ff8056;
+    color: white;
+    font-size: 1.5em;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+
+}
+
+.headerbar {
+    font-size: 1.5em;
+}
+
+/********
+
+making the horizontal nav bar at the top of every page
+
+*********/
+.headerbar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+}
+
+.headerbar li {
+    float: left;
+    text-align: center;
+    padding: 14px 16px;
+}
+
+.headerbar li a {
+    display: block;
+    color: lightgreen;
+    text-decoration: none;
+}
+
+.headerbar li a:hover {
+    background-color: #111;
+}
+
+/*
+.footerbar {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #333;
+    text-align: center;
+}
+*/
+
+
+
+ /* unvisited link */
+a:link {
+    color: lightblue;
+}
+
+/* visited link */
+a:visited {
+    color: lightgreen;
+}
+
+/* mouse over link */
+a:hover {
+    color: hotpink;
+}
+
+/* selected link */
+a:active {
+    color: blue;
+}
+
+
+
+
+
+/*************
+comments
+*************/
+#comments {
+    background-color: #ff6d3d;
+}
+
+.comment {
+    background-color: #ff5a23;
+    padding-left: 0.3em;
+}
+.comment pre {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+
+}
+.comment blockquote {
+    white-space:pre-wrap;
+}

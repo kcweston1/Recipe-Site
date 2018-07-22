@@ -1,4 +1,12 @@
 {% extends "layout.html" %}
 {% block body %}
-    <p>Hello recipe</p>
-    {% endblock %}
+<body>
+    <p>Welcome to the home page!</p>
+    {% if random_recipe is not none %}
+        <p>Random Recipe:</p>
+        <a href="{{ url_for('recipes') + "?id=" + random_recipe['id']|string }}">{{ random_recipe['name'] }}</a>
+        <img src="{{ random_recipe['picture'] }}" style="max-width:40px; max-height:40px;"> <br>
+        {{ random_recipe['description'] }}
+    {% endif %}
+</body>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+{% block body %}
+    <h1>{{ uname }}</h1>
+    <h2>{{ uname }}'s Recipes</h2>
+    {% if recipes %}
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Score</th>
+                <th>Category</th>
+                <th>Description</th>
+            </tr>
+            {% for recipe in recipes %}
+            <tr>
+                <td><a href={{ url_for('recipes') + "?id=" + recipe['id']|string }}>{{ recipe['name'] }}</td>
+                <td>{{ recipe['score'] }}</td>
+                <td>{{ recipe['category_name'] }}</td>
+                <td>{{ recipe['description'] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        User hasn't created any recipes yet.
+    {% endif %}
+
+    <h2>{{ uname }}'s Likes</h2>
+    {% if likedrecipes %}
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Score</th>
+                <th>Category</th>
+                <th>Description</th>
+            </tr>
+            {% for recipe in likedrecipes %}
+            <tr>
+                <td><a href={{ url_for('recipes') + "?id=" + recipe['id']|string }}>{{ recipe['name'] }}</td>
+                <td>{{ recipe['score'] }}</td>
+                <td>{{ recipe['category_name'] }}</td>
+                <td>{{ recipe['description'] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        User hasn't liked any recipes yet.
+    {% endif %}
+{% endblock %}

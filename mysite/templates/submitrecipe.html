@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+{% block body %}
+<p>Submit a new recipe</p>
+<html>
+    <script type='text/javascript'>
+        var ingredientCounter = 1;
+        var instructionCounter = 1;
+        function addIngredient(divName){
+            var newdiv = document.createElement('div');
+            newdiv.innerHTML = 'Ingredient ' + (ingredientCounter + 1) + " <br><input type='text' name='ingredients[" + ingredientCounter + "]' required/>";
+            document.getElementById(divName).appendChild(newdiv);
+            ingredientCounter++;
+            document.getElementById('ingredientCounter').value=ingredientCounter;
+        }
+
+
+        function addInstruction(divName) {
+            var newdiv = document.createElement('div');
+            newdiv.innerHTML = "Instruction " + (instructionCounter + 1) + " <br><textarea rows=2 cols=50 name='instructions[" + instructionCounter + "]' required></textarea>";
+            document.getElementById(divName).appendChild(newdiv);
+            instructionCounter++;
+            document.getElementById('instructionCounter').value=instructionCounter;
+        }
+
+    </script>
+    <h1>Submit a new recipe</h1>
+    <form action='completesubmission' method='post'>
+        <input type='hidden' id='ingredientCounter' name='ingredientCounter' value='1' required></input>
+        <input type='hidden' id='instructionCounter' name='instructionCounter' value='1' required></input>
+        Recipe name<br> <input type='text' name='recipeName' required></input><br>
+        Prep time<br> <input type='number' step='1' min='0' max='10080' name='prepTime' required></input>Minutes<br>
+        Cook time<br> <input type='number' step='1' min='0' max='10080' name='cookTime' required></input>Minutes<br>
+        <div id="ingredients">
+            Ingredient 1<br> <input type='text' name='ingredients[0]' required></input>
+        </div>
+        <input type='button' value='Add another ingredient' onClick="addIngredient('ingredients');"><br>
+        <div id="instructions">
+            Instruction 1<br> <textarea rows=2 cols=50 name='instructions[0]' required></textarea><br>
+        </div>
+        <input type='button' value='Add another instruction' onClick="addInstruction('instructions');"><br>
+        Description<br> <textarea rows=4 cols=50 name='description' required></textarea><br>
+        Category<br> <input type='text' name='category' required></input><br>
+        <input type='submit' name='submit'></input><br>
+    </form>
+</html>
+{% endblock %}

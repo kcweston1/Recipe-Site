@@ -2,7 +2,7 @@
 # A very simple Flask Hello World app for you to get started with...
 
 from flask import Flask, request, render_template, session, escape, url_for, redirect, flash
-import MySQLdb, string, hashlib, secrets, functions, mail, datetime
+import MySQLdb, string, hashlib, secrets, functions
 
 app = Flask(__name__)
 
@@ -12,12 +12,14 @@ app.secret_key = b"D>',\xf1\xa0\xdf\x16i\x96\xe5y\xe9\x91@\xf7\x95\xad\xd9P\xbb%
 
 @app.route('/', methods = ['GET', 'POST'])
 def home():
-    return render_template('home.html')
+    random_recipe = functions.get_random_recipe()
+    return render_template('home.html', random_recipe=random_recipe)
 
 
 @app.route('/signup')
 def signup():
     return render_template('signup.html')
+
 
 @app.route('/signupstatus', methods=['POST'])
 def signup_status():
@@ -56,7 +58,7 @@ def signup_status():
     conn.close()
 
     functions.send_confirmation_email(email, confirmation_code)
-    flash("Account creation successful!")
+    flash("Check your email for the confirmation code!")
 
     return redirect(url_for('home'))
 
@@ -64,6 +66,7 @@ def signup_status():
 @app.route('/login')
 def login():
     return render_template('login.html')
+
 
 @app.route('/processlogin', methods = ['GET', 'POST'])
 def loggedin():
@@ -155,7 +158,6 @@ def finalizepasswordreset():
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('select * from users where username = "%s"' % (username))
         user = cursor.fetchall()
-        print(user)
 
         if functions.longer_than_one_day(user[0]['reset_time']):
             flash("Password reset has expired. Try again.")
@@ -186,23 +188,194 @@ def logout():
     session['logged_in'] = False
     return redirect(url_for('home'))
 
+
 @app.route('/submitrecipe')
 def submit():
-    return '''
-    <h1>Submit a new recipe</h1>
-    <form action='completeSubmission' method='post'>
-        Recipe name<br> <input type='text' name='recipeName'></input>
-        Prep time<br> <input type='text' name='prepTime'></input>
-        Cook time<br> <input type='text' name='cookTime'></input>
-        Ingredients<br> <input type='text' name='ingredients'></input>
-        Instructions<br> <textarea rows=4 cols=50 name='instructions'></textarea>
-        Ingredients<br> <input type='text' name='ingredients'></input>
-        Description<br> <textarea rows=4 cols=50 name='description'></textarea>
-        Category<br> <input type='text' name='category'></input>
-        <input type='submit' name='submit'></input>
-    </form>
-    '''
+    if 'logged_in' in session.keys():
+        if session['logged_in'] == True:
+            return render_template('submitrecipe.html')
+    flash("You must be logged in to create a recipe")
+    return redirect(url_for('login'))
 
+
+@app.route('/completesubmission', methods=['POST'])
+def completesubmission():
+    conn = functions.db_connect()
+    cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+    new_recipe_id = functions.get_new_id('recipes', conn, cursor)
+    cursor.execute('select * from users where username = "%s"' % (session['username']))
+    userid = cursor.fetchall()[0]['id']
+
+    #check to see if name is taken
+    cursor.execute('select * from recipes where name = "%s"' % (request.form.get('recipeName')))
+    if (len(cursor.fetchall()) > 0):
+        flash("That recipe name is already in use.")
+        return redirect(url_for('submit'))
+
+    #deal with categories (if we predefine categories, we can take this out)
+    category = request.form.get("category")
+    cursor.execute('select * from categories where name = "%s"' % (category))
+    categories = cursor.fetchall()
+    if (len(categories) == 0):
+        category_id = functions.get_new_id('categories', conn, cursor)
+        cursor.execute('''insert categories (id, name)
+                          values (%s, "%s")''' % (category_id, category))
+    else:
+        category_id = categories[0]['id']
+
+
+    #build record for recipe
+    name = request.form.get("recipeName")
+    prep_time = request.form.get("prepTime")
+    cook_time = request.form.get("cookTime")
+    description = request.form.get("description")
+
+    cursor.execute('''insert recipes (id, name, preptime, cooktime,
+                      category, creatorid, description)
+                      values (%s, "%s", %s, %s, "%s", %s, "%s")
+                      ''' % (new_recipe_id, name, prep_time, cook_time, category_id, userid, description))
+
+    #build ingredients tables
+    ingredient_counter = request.form.get('ingredientCounter')
+    for i in range(0, int(ingredient_counter)):
+        #make this a new function
+        ingredient = request.form.get("ingredients[" + str(i) + "]")
+        cursor.execute('select * from ingredients where name = "%s"' % (ingredient))
+        matching_ingredient = cursor.fetchall()
+        if (len(matching_ingredient) == 0): #create new ingredient record
+            ingredient_id = functions.get_new_id('ingredients', conn, cursor)
+            cursor.execute('''insert ingredients (id, name)
+                              values (%s, "%s")''' % (ingredient_id, ingredient))
+        else: #ingredient already exists
+            ingredient_id = matching_ingredient[0]['id']
+        cursor.execute('insert recipe_ingredients (recipe, ingredient) values (%s, %s)' % (new_recipe_id, ingredient_id))
+
+    #build instructions table
+    instructions_counter = request.form.get('instructionCounter')
+    for i in range(0, int(instructions_counter)):
+        instruction = request.form.get("instructions[" + str(i) + "]")
+        cursor.execute('''insert instructions (recipe, instructionnumber, instruction)
+                          values (%s, %s, "%s")''' % (new_recipe_id, i, instruction))
+
+
+    conn.commit()
+    conn.close()
+
+    #eventually route user to the newly created recipe page
+    return redirect(url_for('recipes') + "?id=%s" % (new_recipe_id))
+
+
+@app.route('/recipes', methods=['GET', 'POST'])
+def recipes():
+    id = request.args.get('id')
+    if functions.recipe_exists(id):
+        score = functions.get_score(id)
+        recipe = functions.get_recipe_by_id(id)
+        creator = functions.get_username(id)
+        category = functions.get_category(id)
+        ingredients = functions.get_ingredients(id)
+        instructions = functions.get_instructions(id)
+        comments = functions.get_comments(id)
+        user_logged_in = False
+        current_user_is_creator = False
+        likeexists = False
+        dislikeexists = False
+        if 'logged_in' in session.keys() and session['logged_in'] == True:
+            user_logged_in = True
+            current_user_is_creator = (session['username'] == creator)
+            likeexists = functions.like_exists(functions.get_id_of_username(session['username']), id)
+            dislikeexists = functions.dislike_exists(functions.get_id_of_username(session['username']), id)
+        return render_template('recipes.html', score=score, likeexists=likeexists, dislikeexists=dislikeexists, current_user_is_creator=current_user_is_creator, recipe=recipe, creator=creator, category=category, ingredients=ingredients, instructions=instructions, comments=comments, user_logged_in=user_logged_in)
+    else:
+        flash("Recipe not found.")
+        return url_for('recipe_list')
+
+
+@app.route('/editrecipe', methods=['POST'])
+def edit_recipe():
+    return "hello"
+
+
+@app.route('/recipe_list', methods=['GET', 'POST'])
+def recipe_list():
+    sort_by = 'alpha'
+    if request.method == "POST":
+        sort_by = request.form.get("sortBy")
+    recipes = functions.get_all_recipes(sort_by);
+    for recipe in recipes:
+        recipe['category_name'] = functions.get_category_name_by_id(recipe['category'])
+        recipe['score'] = functions.get_score(recipe['id'])
+    return render_template('recipe_list.html', recipes=recipes, sort_by=sort_by)
+
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    results = []
+    if request.method == "POST":
+        search_term = request.form.get('term')
+        option = request.form.get('option')
+        results = functions.get_search_results(search_term, option)
+        if len(results) == 0:
+            flash("No results found!")
+    return render_template('search.html', results=results)
+
+@app.route('/process_like', methods=['GET', 'POST'])
+def process_like():
+    if 'logged_in' in session.keys() and session['logged_in'] == True:
+        recipe_id = request.args.get('id')
+        user_id = functions.get_id_of_username(session['username'])
+        if (functions.recipe_exists(recipe_id)) and (not functions.like_exists(user_id, recipe_id)):
+            functions.insert_like(user_id, recipe_id)
+            flash("Liked!")
+        else:
+            flash("Recipe not found or user already liked this recipe")
+    else:
+        flash("Not logged in!")
+
+    return redirect(url_for('recipes') + "?id=%s" % (recipe_id))
+
+@app.route('/process_dislike', methods=['GET', 'POST'])
+def process_dislike():
+    if 'logged_in' in session.keys() and session['logged_in'] == True:
+        recipe_id = request.args.get('id')
+        user_id = functions.get_id_of_username(session['username'])
+        if (functions.recipe_exists(recipe_id)) and (not functions.dislike_exists(user_id, recipe_id)):
+            functions.insert_dislike(user_id, recipe_id)
+            flash("Disliked!")
+        else:
+            flash("Recipe not found or user already disliked this recipe")
+    else:
+        flash("Not logged in!")
+
+    return redirect(url_for('recipes') + "?id=%s" % (recipe_id))
+
+@app.route('/delete_like', methods=['GET', 'POST'])
+def delete_like():
+    if 'logged_in' in session.keys() and session['logged_in'] == True:
+        recipe_id = request.args.get('id')
+        user_id = functions.get_id_of_username(session['username'])
+        if functions.recipe_exists(recipe_id):
+            functions.delete_like(user_id, recipe_id)
+            flash("Opinion obliterated!")
+        else:
+            flash("Recipe not found or user did not like this recipe")
+    else:
+        flash("Not logged in!")
+
+    return redirect(url_for('recipes') + "?id=%s" % (recipe_id))
+
+
+@app.route('/process_comment', methods=['GET', 'POST'])
+def process_comment():
+    if request.method == 'POST':
+        recipe_id = request.args.get('id')
+        user_id = functions.get_id_of_username(session['username'])
+        comment_text = request.form.get('commentfield')
+        functions.save_comment(recipe_id, user_id, comment_text)
+        flash("Comment successful!")
+        return redirect(url_for('recipes') + "?id=%s" % (recipe_id) + "#comments" )
+    else:
+        flash("How did you get here?")
+        return redirect(url_for('recipe_list'))
 
 @app.route('/confirm', methods=['GET'])
 def confirm():
@@ -222,16 +395,78 @@ def confirm():
             cursor.execute(sql)
             conn.commit()
             conn.close()
-            return '''
-            success
-            '''
-    return '''
-    failed for some reason
+            flash("Account confirmed successfully!")
+            return redirect(url_for('home'))
+    conn.close()
+    flash("Something went wrong with your account confirmation.")
+    return redirect(url_for('home'))
+
+@app.route('/editpicture', methods=['POST'])
+def edit_picture():
+    recipe_id = request.form.get('recipeID')
+    url = request.form.get('pictureURL')
+    print(recipe_id)
+    print(url)
+    conn = functions.db_connect()
+    cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute('update recipes set picture = "%s" where id = %s' % (url, recipe_id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('recipes') + "?id=" + recipe_id)
+
+
+
+
+@app.route('/user', methods=['GET', 'POST'])
+def user():
+    uname = request.args.get('uname')
+
+    if not functions.username_exists(uname):
+        flash('User not found!')
+        return redirect(url_for('home'))
+
+    user_id = functions.get_id_of_username(uname)
+
+    recipes = functions.get_recipes_of_user(user_id)
+    for recipe in recipes:
+        recipe['category_name'] = functions.get_category_name_by_id(recipe['category'])
+        recipe['score'] = functions.get_score(recipe['id'])
+
+    # TODO: add sorting
+    '''
+    sort_by = 'alpha'
+    if request.method == "POST":
+        sort_by = request.form.get("sortBy")
+    recipes = functions.get_all_recipes(sort_by);
     '''
 
+    likedrecipes = functions.get_likes_of_user(user_id)
+    for recipe in likedrecipes:
+        recipe['category_name'] = functions.get_category_name_by_id(recipe['category'])
+        recipe['score'] = functions.get_score(recipe['id'])
 
 
 
 
+    if 'logged_in' in session.keys() and session['logged_in'] == True:
+        if (session['username'] == uname):
+            0
+    return render_template('user.html', uname=uname, recipes=recipes, likedrecipes=likedrecipes)
 
 
+@app.route('/delete_recipe', methods=['GET', 'POST'])
+def delete_recipe():
+    if 'logged_in' in session.keys() and session['logged_in'] == True:
+        recipe_id = request.args.get('id')
+        if (functions.get_username(recipe_id) == session['username']):
+            if functions.recipe_exists(recipe_id):
+                functions.delete_recipe(recipe_id)
+                flash("Recipe deleted!")
+            else:
+                flash("Recipe not found!")
+        else:
+            flash("Username does not match!")
+    else:
+        flash("Not logged in!")
+
+    return redirect(url_for('recipe_list'))

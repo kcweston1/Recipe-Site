@@ -1,18 +1,35 @@
 <!doctype html>
-<title>Flaskr</title>
+<title>recipe0</title>
 
-<div class=page>
-  <h1>Flaskr</h1>
-  <div class=metanav>
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+
+<div class=headerbar>
+    <ul>
+  <li><a href="{{ url_for('home') }}">recipe0</a></li>
+  <li><a href="{{ url_for('recipe_list') }}">Browse Recipes</a></li>
+  <li><a href="{{ url_for('search') }}">Search recipes</a></li>
+  <li><a href="{{ url_for('submit') }}">Submit a recipe</a></li>
   {% if not session.logged_in %}
-    <a href="{{ url_for('login') }}">log in</a> or <a href="{{ url_for('signup') }}">sign up</a>
-  {% else %}
-    <p>Hello, {{ session['username'] }}</p>
-    <a href="{{ url_for('logout') }}">log out</a>
-  {% endif %}
-  </div>
+        <li><a href="{{ url_for('login') }}">log in</a></li>
+        <li><a href="{{ url_for('signup') }}">sign up</a></li>
+      {% else %}
+        <li><a href= {{ url_for('user') + "?uname=" + session['username'] }}>Profile</a></li>
+        <li>(logged in as {{ session['username'] }})</li>
+        <li><a href="{{ url_for('logout') }}">log out</a></li>
+      {% endif %}
+
+    </ul>
   {% for message in get_flashed_messages() %}
     <div class=flash>{{ message }}</div>
   {% endfor %}
-  {% block body %}{% endblock %}
+
+    </div>
 </div>
+ {% block body %}{% endblock %}
+ <!--
+ <div class=footerbar>
+    <ul>
+        <li>©2018</li>
+    </ul>
+</div>
+-->

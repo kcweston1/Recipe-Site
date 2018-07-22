@@ -1,0 +1,16 @@
+{% extends 'layout.html' %}
+{% block body %}
+    <h1>Search</h1>
+    <form action='/search' method='POST'>
+        <input type='text' placeholder='Enter search term' name='term' required/>
+        <select name='option'>
+            <option value='recipes'>Recipe Name</option>
+            <option value='ingredients'>Ingredient</option>
+            <option value='categories'>Category</option>
+        </select> <br>
+        <button type='submit' name='search'>Search</button>
+    </form>
+    {% for recipe in results %}
+        <li><a href={{ url_for('recipes') + "?id=" + recipe['id']|string }}>{{ recipe['name'] }}</li>
+    {% endfor %}
+{% endblock %}
